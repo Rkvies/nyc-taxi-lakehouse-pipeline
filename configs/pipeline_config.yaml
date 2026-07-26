@@ -1,0 +1,8 @@
+landing_path: "/mnt/landing/nyc_taxi/"
+bronze_table: "bronze.trips_raw"
+silver_table: "silver.trips_clean"
+gold_fact_table: "gold.fact_trips"
+gold_dim_date: "gold.dim_date"
+gold_dim_location: "gold.dim_location"
+gold_dim_vendor: "gold.dim_vendor"
+source_url: "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet"
