@@ -1,0 +1,1110 @@
+{
+  "datasets": [
+    {
+      "name": "c67ef54c",
+      "displayName": "dim_date",
+      "config": {
+        "version": "1.1",
+        "source": "workspace.gold.dim_date",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ]
+      }
+    },
+    {
+      "name": "7d390157",
+      "displayName": "dim_location",
+      "config": {
+        "version": "1.1",
+        "source": "workspace.gold.dim_location",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ]
+      }
+    },
+    {
+      "name": "a001a4dd",
+      "displayName": "dim_vendor",
+      "config": {
+        "version": "1.1",
+        "source": "workspace.gold.dim_vendor",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          }
+        ]
+      }
+    },
+    {
+      "name": "afc4aaf7",
+      "displayName": "fact_trips",
+      "config": {
+        "version": "1.1",
+        "source": "workspace.gold.fact_trips",
+        "dimensions": [
+          {
+            "expr": "source.*"
+          },
+          {
+            "name": "fare_bucket",
+            "expr": "CASE WHEN fare_amount < 10 THEN '$0–10' WHEN fare_amount < 20 THEN '$10–20' WHEN fare_amount < 40 THEN '$20–40' WHEN fare_amount < 60 THEN '$40–60' ELSE '$60+' END"
+          }
+        ],
+        "measures": [
+          {
+            "name": "count",
+            "expr": "COUNT(*)",
+            "comment": "Represents the total number of rows in the dataset. Use this measure to count all",
+            "displayName": "Count"
+          },
+          {
+            "name": "tip_percentage",
+            "expr": "SUM(tip_amount) * 100.0 / NULLIF(SUM(fare_amount), 0)",
+            "displayName": "Tip Percentage",
+            "comment": "Percentage of tips relative to total fare amount"
+          }
+        ]
+      }
+    }
+  ],
+  "relationshipGraphs": [
+    {
+      "sources": [
+        {
+          "name": "dim_date",
+          "datasetName": "c67ef54c"
+        },
+        {
+          "name": "dim_location",
+          "datasetName": "7d390157"
+        },
+        {
+          "name": "dim_vendor",
+          "datasetName": "a001a4dd"
+        },
+        {
+          "name": "fact_trips",
+          "datasetName": "afc4aaf7"
+        }
+      ],
+      "relationships": [
+        {
+          "name": "fact_trips_dim_date",
+          "from": "fact_trips",
+          "to": "dim_date",
+          "on": "`fact_trips`.`pickup_date` = `dim_date`.`date_key`",
+          "cardinality": "CARDINALITY_MANY_TO_ONE"
+        },
+        {
+          "name": "fact_trips_dim_location",
+          "from": "fact_trips",
+          "to": "dim_location",
+          "on": "`fact_trips`.`location_sk` = `dim_location`.`location_sk`",
+          "cardinality": "CARDINALITY_MANY_TO_ONE"
+        },
+        {
+          "name": "fact_trips_dim_vendor",
+          "from": "fact_trips",
+          "to": "dim_vendor",
+          "on": "`fact_trips`.`vendor_sk` = `dim_vendor`.`vendor_sk`",
+          "cardinality": "CARDINALITY_MANY_TO_ONE"
+        }
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "6de6f155",
+      "displayName": "Trip Analytics",
+      "layout": [
+        {
+          "widget": {
+            "name": "total_trips_counter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "measure(fact_trips__count)",
+                      "expression": "MEASURE(`fact_trips`.`count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "title": "Total Trips",
+                "showTitle": true
+              },
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(fact_trips__count)",
+                  "rowNumber": 0
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 2,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "total_revenue",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "sum(fact_trips__fare_amount)",
+                      "expression": "SUM(`fact_trips`.`fare_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "title": "Total Revenue",
+                "showTitle": true
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(fact_trips__fare_amount)",
+                  "rowNumber": 0,
+                  "format": {
+                    "type": "number-currency",
+                    "abbreviation": "compact",
+                    "currencyCode": "USD"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 2,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "total_tips",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "sum(fact_trips__tip_amount)",
+                      "expression": "SUM(`fact_trips`.`tip_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "title": "Total Tips",
+                "showTitle": true
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "sum(fact_trips__tip_amount)",
+                  "rowNumber": 0,
+                  "format": {
+                    "type": "number-currency",
+                    "abbreviation": "compact",
+                    "currencyCode": "USD"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 2,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "avg_fare",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "avg(fact_trips__fare_amount)",
+                      "expression": "AVG(`fact_trips`.`fare_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "title": "Average Fare",
+                "showTitle": true
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(fact_trips__fare_amount)",
+                  "rowNumber": 0,
+                  "format": {
+                    "type": "number-currency",
+                    "abbreviation": "none",
+                    "currencyCode": "USD",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 2
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 2,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "avg_distance",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "avg(fact_trips__trip_distance)",
+                      "expression": "AVG(`fact_trips`.`trip_distance`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "title": "Average Trip Distance",
+                "showTitle": true
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(fact_trips__trip_distance)",
+                  "rowNumber": 0,
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 2
+                    }
+                  },
+                  "formatTemplate": "{{ @formatted }} miles"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "avg_duration",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "avg(fact_trips__trip_duration_minutes)",
+                      "expression": "AVG(`fact_trips`.`trip_duration_minutes`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "title": "Average Trip Duration",
+                "showTitle": true
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(fact_trips__trip_duration_minutes)",
+                  "rowNumber": 0,
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "formatTemplate": "{{ @formatted }} min"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 5,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "avg_passengers",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "avg(fact_trips__passenger_count)",
+                      "expression": "AVG(`fact_trips`.`passenger_count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "title": "Average Passengers per Trip",
+                "showTitle": true
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "avg(fact_trips__passenger_count)",
+                  "rowNumber": 0,
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 5,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "tip_percentage",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "measure(fact_trips__tip_percentage)",
+                      "expression": "MEASURE(`fact_trips`.`tip_percentage`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "title": "Tip Percentage",
+                "showTitle": true
+              },
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(fact_trips__tip_percentage)",
+                  "rowNumber": 0,
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "none",
+                    "decimalPlaces": {
+                      "type": "exact",
+                      "places": 1
+                    }
+                  },
+                  "formatTemplate": "{{ @formatted }}%"
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 9,
+            "y": 5,
+            "width": 3,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "revenue_breakdown_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Revenue Breakdown"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "revenue_by_vendor",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "fact_trips__vendor_sk",
+                      "expression": "`fact_trips`.`vendor_sk`"
+                    },
+                    {
+                      "name": "sum(fact_trips__fare_amount)",
+                      "expression": "SUM(`fact_trips`.`fare_amount`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Revenue by Vendor",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "fact_trips__vendor_sk",
+                  "displayName": "vendor_sk",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(fact_trips__fare_amount)",
+                  "displayName": "fare_amount",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "fact_trips__vendor_sk",
+                  "displayName": "vendor_sk",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "revenue_by_month",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "sum(fact_trips__fare_amount)",
+                      "expression": "SUM(`fact_trips`.`fare_amount`)"
+                    },
+                    {
+                      "name": "monthly(fact_trips__pickup_date)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `fact_trips`.`pickup_date`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "frame": {
+                "title": "Revenue by Month",
+                "showTitle": true
+              },
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(fact_trips__pickup_date)",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(fact_trips__fare_amount)",
+                  "format": {
+                    "type": "number-currency",
+                    "abbreviation": "compact",
+                    "currencyCode": "USD"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "label": {
+                  "show": true,
+                  "text": {
+                    "fieldName": "sum(fact_trips__fare_amount)",
+                    "format": {
+                      "type": "number-currency",
+                      "abbreviation": "compact",
+                      "currencyCode": "USD"
+                    }
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 6,
+            "y": 9,
+            "width": 6,
+            "height": 8
+          }
+        },
+        {
+          "widget": {
+            "name": "trips_by_month",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "monthly(fact_trips__pickup_date)",
+                      "expression": "DATE_TRUNC(\"MONTH\", `fact_trips`.`pickup_date`)"
+                    },
+                    {
+                      "name": "measure(fact_trips__count)",
+                      "expression": "MEASURE(`fact_trips`.`count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Trips by Month",
+                "showTitle": true
+              },
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "monthly(fact_trips__pickup_date)",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(fact_trips__count)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 18,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "trips_by_day_of_week",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "dim_date__day_of_week",
+                      "expression": "`dim_date`.`day_of_week`"
+                    },
+                    {
+                      "name": "measure(fact_trips__count)",
+                      "expression": "MEASURE(`fact_trips`.`count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Trips by Day of Week",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "dim_date__day_of_week",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(fact_trips__count)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 18,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "weekend_vs_weekday",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "dim_date__is_weekend",
+                      "expression": "`dim_date`.`is_weekend`"
+                    },
+                    {
+                      "name": "measure(fact_trips__count)",
+                      "expression": "MEASURE(`fact_trips`.`count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Weekend vs Weekday",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "dim_date__is_weekend",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(fact_trips__count)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 18,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "fare_histogram",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "fields": [
+                    {
+                      "name": "fact_trips__fare_bucket",
+                      "expression": "`fact_trips`.`fare_bucket`"
+                    },
+                    {
+                      "name": "measure(fact_trips__count)",
+                      "expression": "MEASURE(`fact_trips`.`count`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "frame": {
+                "title": "Fare Buckets",
+                "showTitle": true
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "fact_trips__fare_bucket",
+                  "scale": {
+                    "type": "categorical",
+                    "sort": {
+                      "by": "custom-order",
+                      "orderedValues": [
+                        "$0–10",
+                        "$10–20",
+                        "$20–40",
+                        "$40–60",
+                        "$60+"
+                      ]
+                    }
+                  }
+                },
+                "y": {
+                  "fieldName": "measure(fact_trips__count)",
+                  "format": {
+                    "type": "number-plain",
+                    "abbreviation": "compact"
+                  },
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 24,
+            "width": 12,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "f563d6f1",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Trips Breakdown"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 17,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "db9e4361",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## NYC Taxi LakeHouse Pipeline"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 1,
+            "width": 12,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "vendor1",
+            "queries": [
+              {
+                "name": "dashboards/01f18a787558164ca97ace0eb8612d56/datasets/01f18a78a20411dfadaed26ed60de5ff_vendor_id",
+                "query": {
+                  "datasetName": "a001a4dd",
+                  "fields": [
+                    {
+                      "name": "vendor_id",
+                      "expression": "`vendor_id`"
+                    },
+                    {
+                      "name": "vendor_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Vendor"
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "vendor_id",
+                    "queryName": "dashboards/01f18a787558164ca97ace0eb8612d56/datasets/01f18a78a20411dfadaed26ed60de5ff_vendor_id"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 4,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "location",
+            "queries": [
+              {
+                "name": "dashboards/01f18a787558164ca97ace0eb8612d56/datasets/01f18a789b19180182863f42a31ab2fa_location_id",
+                "query": {
+                  "datasetName": "7d390157",
+                  "fields": [
+                    {
+                      "name": "location_id",
+                      "expression": "`location_id`"
+                    },
+                    {
+                      "name": "location_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Location"
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "location_id",
+                    "queryName": "dashboards/01f18a787558164ca97ace0eb8612d56/datasets/01f18a789b19180182863f42a31ab2fa_location_id"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 4,
+            "height": 1
+          }
+        },
+        {
+          "widget": {
+            "name": "passenger-count",
+            "queries": [
+              {
+                "name": "dashboards/01f18a787558164ca97ace0eb8612d56/datasets/01f18a78a7b91d799c6531e74df7361a_passenger_count",
+                "query": {
+                  "datasetName": "afc4aaf7",
+                  "fields": [
+                    {
+                      "name": "passenger_count",
+                      "expression": "`passenger_count`"
+                    },
+                    {
+                      "name": "passenger_count_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true,
+                "title": "Passenger Count"
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "passenger_count",
+                    "queryName": "dashboards/01f18a787558164ca97ace0eb8612d56/datasets/01f18a78a7b91d799c6531e74df7361a_passenger_count"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 0,
+            "width": 4,
+            "height": 1
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}
